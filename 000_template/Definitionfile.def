@@ -4,69 +4,62 @@ Stage: build
 
 %setup
     ############################################
-    # setup. コンテナ外で行われる．
+    # setup. コンテナ外で行われるコマンド
     ############################################
-    touch /file1
-    touch ${SINGULARITY_ROOTFS}/file2
 
 %files
     ############################################
     # files ファイルのマウント
     ############################################
-    /file1
-    /file1 /opt
 
 %environment
     ############################################
     # enviroments 環境変数の定義
     ############################################
-    export LISTEN_PORT=12345
+    export TZ=Asia/Tokyo 
     export LC_ALL=C
 
 %post
     ############################################
     # post ファイルのダウロードとか，色々．基本的にここに書く
     ############################################
-    apt-get update && apt-get install -y netcat
-    NOW=`date`
-    echo "export NOW=\"${NOW}\"" >> $SINGULARITY_ENVIRONMENT
+    # aptでインストールする場合，入力待ちを避けるために下記のように書く
+    # DEBIAN_FRONTEND=noninteractive && apt install -y hogehoge ...
+
+    # essential  
+    apt update
+    DEBIAN_FRONTEND=noninteractive apt install -y lsb-release wget curl git gnupg build-essential
+    mkdir -p /run/user/1000
+    mkdir -p /var/lib/dbus
+    
+    # avoid freezing
+    DEBIAN_FRONTEND=noninteractive apt install -y tzdata keyboard-configuration
+
 
 %runscript
     ############################################
     # runscript. singularity run で実行するコマンド
     ############################################
-    echo "Container was created $NOW"
-    echo "Arguments received: $*"
-    exec echo "$@"
 
 %startscript
     ############################################
     # startscript. singularity insntance startで実行するコマンド 
     ############################################
-    nc -lp $LISTEN_PORT
 
 %test
     ############################################
     # test. テスト時に実行するコマンド
     ############################################
-    grep -q NAME=\"Ubuntu\" /etc/os-release
-    if [ $? -eq 0 ]; then
-        echo "Container base is Ubuntu as expected."
-    else
-        echo "Container base is not Ubuntu."
-        exit 1
-    fi
+
 
 %labels
     ############################################
     # label. ラベル
     ############################################
-    Author d@sylabs.io
+    Author Daiju Kanaoka
     Version v0.0.1
 
 %help
     ############################################
     # help. ヘルプ
     ############################################
-    This is a demo container used to illustrate a def file that uses all
-    supported sections.
