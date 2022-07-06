@@ -1,0 +1,77 @@
+Bootstrap: docker
+From: ubuntu:20.04
+Stage: build
+
+%setup
+    ############################################
+    # setup. コンテナ外で行われるコマンド
+    ############################################
+
+%files
+    ############################################
+    # files ファイルのマウント
+    ############################################
+
+%environment
+    ############################################
+    # enviroments 環境変数の定義
+    ############################################
+    export TZ=Asia/Tokyo 
+    export LC_ALL=C
+
+%post
+    ############################################
+    # post ファイルのダウロードとか，色々．基本的にここに書く
+    ############################################
+    # aptでインストールする場合，入力待ちを避けるために下記のように書く
+    # DEBIAN_FRONTEND=noninteractive && apt install -y hogehoge ...
+
+    # essential  
+    apt update
+    DEBIAN_FRONTEND=noninteractive apt install -y lsb-release wget curl git gnupg build-essential
+    mkdir -p /run/user/1000
+    mkdir -p /var/lib/dbus
+    
+    # avoid freezing
+    DEBIAN_FRONTEND=noninteractive apt install -y tzdata keyboard-configuration
+
+    # timezone
+    # ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+    # ROS noetic
+    sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+    curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add -
+    apt update
+    DEBIAN_FRONTEND=noninteractive apt install -y ros-noetic-desktop-full
+
+    # python setup
+    ln -s /usr/bin/python3 /usr/bin/python
+    curl -kL https://bootstrap.pypa.io/pip/get-pip.py | python
+
+%runscript
+    ############################################
+    # runscript. singularity run で実行するコマンド
+    ############################################
+
+%startscript
+    ############################################
+    # startscript. singularity insntance startで実行するコマンド 
+    ############################################
+
+%test
+    ############################################
+    # test. テスト時に実行するコマンド
+    ############################################
+
+
+%labels
+    ############################################
+    # label. ラベル
+    ############################################
+    Author Daiju Kanaoka
+    Version v0.0.1
+
+%help
+    ############################################
+    # help. ヘルプ
+    ############################################
