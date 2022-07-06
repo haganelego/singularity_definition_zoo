@@ -1,0 +1,72 @@
+Bootstrap: library
+From: ubuntu:18.04
+Stage: build
+
+%setup
+    ############################################
+    # setup. コンテナ外で行われる．
+    ############################################
+    touch /file1
+    touch ${SINGULARITY_ROOTFS}/file2
+
+%files
+    ############################################
+    # files ファイルのマウント
+    ############################################
+    /file1
+    /file1 /opt
+
+%environment
+    ############################################
+    # enviroments 環境変数の定義
+    ############################################
+    export LISTEN_PORT=12345
+    export LC_ALL=C
+
+%post
+    ############################################
+    # post ファイルのダウロードとか，色々．基本的にここに書く
+    ############################################
+    apt-get update && apt-get install -y netcat
+    NOW=`date`
+    echo "export NOW=\"${NOW}\"" >> $SINGULARITY_ENVIRONMENT
+
+%runscript
+    ############################################
+    # runscript. singularity run で実行するコマンド
+    ############################################
+    echo "Container was created $NOW"
+    echo "Arguments received: $*"
+    exec echo "$@"
+
+%startscript
+    ############################################
+    # startscript. singularity insntance startで実行するコマンド 
+    ############################################
+    nc -lp $LISTEN_PORT
+
+%test
+    ############################################
+    # test. テスト時に実行するコマンド
+    ############################################
+    grep -q NAME=\"Ubuntu\" /etc/os-release
+    if [ $? -eq 0 ]; then
+        echo "Container base is Ubuntu as expected."
+    else
+        echo "Container base is not Ubuntu."
+        exit 1
+    fi
+
+%labels
+    ############################################
+    # label. ラベル
+    ############################################
+    Author d@sylabs.io
+    Version v0.0.1
+
+%help
+    ############################################
+    # help. ヘルプ
+    ############################################
+    This is a demo container used to illustrate a def file that uses all
+    supported sections.
