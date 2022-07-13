@@ -11,6 +11,7 @@ Stage: build
     ############################################
     # files ファイルのマウント
     ############################################
+    ../000_template/entrypoint.sh /
 
 %environment
     ############################################
@@ -28,7 +29,7 @@ Stage: build
 
     # essential  
     apt update
-    DEBIAN_FRONTEND=noninteractive apt install -y lsb-release wget curl git gnupg build-essential
+    DEBIAN_FRONTEND=noninteractive apt install -y lsb-release wget curl git nano gnupg build-essential software-properties-common
     mkdir -p /run/user/1000
     mkdir -p /var/lib/dbus
     
