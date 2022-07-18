@@ -1,5 +1,5 @@
 Bootstrap: docker
-From: ubuntu:20.04
+From: ros:noetic-ros-core
 Stage: build
 
 %setup
@@ -36,20 +36,15 @@ Stage: build
     # avoid freezing
     DEBIAN_FRONTEND=noninteractive apt install -y tzdata keyboard-configuration
 
-    # timezone
-    # ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-
     ##################################
     # ROS noetic
     #################################
-    sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
-    curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add -
     apt update
     DEBIAN_FRONTEND=noninteractive apt install -y ros-noetic-desktop-full
     DEBIAN_FRONTEND=noninteractive apt install -y python3-rosdep python3-rosinstall python3-vcstools python3-catkin-tools
 
     # python setup
-    ln -s /usr/bin/python3 /usr/bin/python
+    ln -sf /usr/bin/python3 /usr/bin/python
     curl -kL https://bootstrap.pypa.io/pip/get-pip.py | python
 
     # set entrypoint.sh

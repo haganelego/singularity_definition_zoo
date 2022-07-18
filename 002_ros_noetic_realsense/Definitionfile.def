@@ -1,5 +1,5 @@
 Bootstrap: docker
-From: ubuntu:20.04
+From: ros:noetic-ros-core
 Stage: build
 
 %setup
@@ -40,18 +40,16 @@ Stage: build
     ##################################
     # ROS noetic
     #################################
-    sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
-    curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add -
     apt update
-    DEBIAN_FRONTEND=noninteractive apt install -y ros-noetic-desktop
     DEBIAN_FRONTEND=noninteractive apt install -y python3-rosdep python3-rosinstall python3-vcstools python3-catkin-tools
+    DEBIAN_FRONTEND=noninteractive apt install -y libeigen3-dev ros-noetic-ddynamic-reconfigure ros-noetic-image-transport ros-noetic-cv-bridge ros-noetic-nodelet \
+                                                  ros-noetic-tf ros-noetic-diagnostic-updater ros-noetic-rviz
 
     # python setup
-    ln -s /usr/bin/python3 /usr/bin/python
+    ln -sf /usr/bin/python3 /usr/bin/python
     curl -kL https://bootstrap.pypa.io/pip/get-pip.py | python
 
     # install realsense library
-    DEBIAN_FRONTEND=noninteractive apt install -y ros-noetic-ddynamic-reconfigure
     apt-key adv --keyserver keyserver.ubuntu.com --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE || apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE
     add-apt-repository "deb https://librealsense.intel.com/Debian/apt-repo $(lsb_release -cs) main" -u
     DEBIAN_FRONTEND=noninteractive apt update
