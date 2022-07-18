@@ -1,0 +1,84 @@
+Bootstrap: docker
+From: ros:noetic-robot-buster
+Stage: build
+
+%setup
+    ############################################
+    # setup. コンテナ外で行われるコマンド
+    ############################################
+
+%files
+    ############################################
+    # files ファイルのマウント
+    ############################################
+    ../000_template/entrypoint.sh /
+
+%environment
+    ############################################
+    # enviroments 環境変数の定義
+    ############################################
+    export TZ=Asia/Tokyo 
+    export LC_ALL=C
+
+%post
+    ############################################
+    # post ファイルのダウロードとか，色々．基本的にここに書く
+    ############################################
+    # aptでインストールする場合，入力待ちを避けるために下記のように書く
+    # DEBIAN_FRONTEND=noninteractive && apt install -y hogehoge ...
+
+    # essential  
+    apt update
+    DEBIAN_FRONTEND=noninteractive apt install -y lsb-release wget curl git nano gnupg build-essential software-properties-common
+    mkdir -p /run/user/1000
+    mkdir -p /var/lib/dbus
+    
+    # Avoid freezing
+    DEBIAN_FRONTEND=noninteractive apt install -y tzdata keyboard-configuration
+
+    # Install dependencies
+    DEBIAN_FRONTEND=noninteractive apt install -y python3-rosdep python3-rosinstall python3-vcstools python3-catkin-tools
+    DEBIAN_FRONTEND=noninteractive apt install -y ros-noetic-controller-manager ros-noetic-controller-manager-msgs ros-noetic-joint-limits-interface ros-noetic-realtime-tools \
+                                                  ros-noetic-gazebo-ros ros-noetic-hardware-interface ros-noetic-control-toolbox ros-noetic-controller-interface \
+                                                  ros-noetic-moveit-ros-control-interface ros-noetic-moveit-fake-controller-manager ros-noetic-moveit-planners-ompl \
+                                                  ros-noetic-moveit-ros-visualization ros-noetic-moveit-setup-assistant ros-noetic-joint-state-publisher-gui ros-noetic-ros-control \
+                                                  ros-noetic-gazebo-ros-control ros-noetic-joint-state-controller ros-noetic-joint-trajectory-controller ros-noetic-position-controllers \
+                                                  ros-noetic-jsk-rviz-plugins ros-noetic-transmission-interface ros-noetic-rviz
+    
+    # python setup
+    ln -sf /usr/bin/python3 /usr/bin/python
+    curl -kL https://bootstrap.pypa.io/pip/get-pip.py | python
+
+    # Install python library
+    pip install pymycobot numpy
+
+    # Set entrypoint.sh
+    echo source /opt/ros/noetic/setup.bash >> /entrypoint.sh
+
+%runscript
+    ############################################
+    # runscript. singularity run で実行するコマンド
+    ############################################
+
+%startscript
+    ############################################
+    # startscript. singularity insntance startで実行するコマンド 
+    ############################################
+
+%test
+    ############################################
+    # test. テスト時に実行するコマンド
+    ############################################
+
+
+%labels
+    ############################################
+    # label. ラベル
+    ############################################
+    Author Daiju Kanaoka
+    Version v0.0.1
+
+%help
+    ############################################
+    # help. ヘルプ
+    ############################################
