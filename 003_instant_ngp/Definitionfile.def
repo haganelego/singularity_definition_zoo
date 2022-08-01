@@ -37,11 +37,15 @@ Stage: build
     DEBIAN_FRONTEND=noninteractive apt install -y tzdata keyboard-configuration
 
     # install common software
-    DEBIAN_FRONTEND=noninteractive apt install -y openssl libssl-dev python3-dev python3-pip libopenexr-dev libxi-dev libglfw3-dev libglew-dev libomp-dev libxinerama-dev libxcursor-dev
+    DEBIAN_FRONTEND=noninteractive apt install -y openssl libssl-dev python3-dev libopenexr-dev libxi-dev libglfw3-dev \
+                                                  libglew-dev libomp-dev libxinerama-dev libxcursor-dev ffmpeg \
+                                                  libboost-program-options-dev libboost-filesystem-dev libboost-graph-dev libboost-system-dev \
+                                                  libboost-test-dev libeigen3-dev libsuitesparse-dev libfreeimage-dev libmetis-dev libgoogle-glog-dev \
+                                                  libgflags-dev libglew-dev qtbase5-dev libqt5opengl5-dev libcgal-dev libatlas-base-dev libsuitesparse-dev
 
     # python setup
-    # ln -s /usr/bin/python3.8 /usr/bin/python
-    # curl -kL https://bootstrap.pypa.io/pip/get-pip.py | python
+    ln -s /usr/bin/python3.8 /usr/bin/python
+    curl -kL https://bootstrap.pypa.io/pip/get-pip.py | python
 
     # install python module 
     pip install \
@@ -62,6 +66,33 @@ Stage: build
     make install
     cd ../
     rm -rf cmake-3.22.2.tar.gz cmake-3.22.2
+
+    # install Ceres solver
+    git clone https://ceres-solver.googlesource.com/ceres-solver
+    cd ceres-solver
+    git checkout $(git describe --tags) # Checkout the latest release
+    mkdir build
+    cd build
+    cmake .. -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF
+    make -j
+    make install
+    cd ..
+    rm -rf ceres-solver
+
+    # install colmap
+    git clone https://github.com/colmap/colmap.git
+    cd colmap
+    git checkout dev
+    mkdir build
+    cd build
+    cmake ..
+    make -j
+    make install
+    cd ..
+    rm -rf colmap
+
+    # finalize
+    rm -rf /var/lib/apt/lists/*
 
 %runscript
     ############################################
