@@ -70,7 +70,7 @@ Stage: build
     # install Ceres solver
     git clone https://ceres-solver.googlesource.com/ceres-solver
     cd ceres-solver
-    git checkout $(git describe --tags) # Checkout the latest release
+    git checkout f68321e7de8929fbcdb95dd42877531e64f72f66 # Checkout the 2.1.0
     mkdir build
     cd build
     cmake .. -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF
@@ -82,7 +82,7 @@ Stage: build
     # install colmap
     git clone https://github.com/colmap/colmap.git
     cd colmap
-    git checkout dev
+    git checkout ea40ef9aecf98eec7e14bd6eeedd2a5381c6b46b # Checkout ver.3.7
     mkdir build
     cd build
     cmake ..
