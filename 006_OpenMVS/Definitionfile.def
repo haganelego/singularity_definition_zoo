@@ -1,0 +1,114 @@
+Bootstrap: docker
+From: nvidia/cuda:11.7.0-devel-ubuntu22.04
+Stage: build
+
+%setup
+    ############################################
+    # setup. コンテナ外で行われるコマンド
+    ############################################
+
+%files
+    ############################################
+    # files ファイルのマウント
+    ############################################
+    ../000_template/entrypoint.sh /
+
+%environment
+    ############################################
+    # enviroments 環境変数の定義
+    ############################################
+    export TZ=Asia/Tokyo 
+    export LC_ALL=C
+
+%post
+    ############################################
+    # post ファイルのダウロードとか，色々．基本的にここに書く
+    ############################################
+    # aptでインストールする場合，入力待ちを避けるために下記のように書く
+    # DEBIAN_FRONTEND=noninteractive && apt install -y hogehoge ...
+
+    # essential  
+    apt update
+    DEBIAN_FRONTEND=noninteractive apt install -y lsb-release wget curl git nano gnupg build-essential software-properties-common
+    mkdir -p /run/user/1000
+    mkdir -p /var/lib/dbus
+    
+    # avoid freezing
+    DEBIAN_FRONTEND=noninteractive apt install -y tzdata keyboard-configuration
+
+    # install for building
+    DEBIAN_FRONTEND=noninteractive apt install -y cmake libpng-dev libjpeg-dev libtiff-dev libglu1-mesa-dev
+
+    # install Boost
+    DEBIAN_FRONTEND=noninteractive apt install -y libboost-iostreams-dev libboost-program-options-dev libboost-system-dev libboost-serialization-dev
+
+    # install OpenCV
+    DEBIAN_FRONTEND=noninteractive apt install -y libopencv-dev
+
+    # install CGAL
+    DEBIAN_FRONTEND=noninteractive apt install -y libcgal-dev libcgal-qt5-dev
+
+    # install GLFW3
+    DEBIAN_FRONTEND=noninteractive apt install -y freeglut3-dev libglew-dev libglfw3-dev
+
+    # install VCGLib
+    main_path=`pwd`
+    git clone https://github.com/cdcseacave/VCG.git vcglib
+
+    # install Ceres solver
+    DEBIAN_FRONTEND=noninteractive apt install -y libeigen3-dev libgoogle-glog-dev
+    git clone https://ceres-solver.googlesource.com/ceres-solver
+    cd ceres-solver
+    git checkout f68321e7de8929fbcdb95dd42877531e64f72f66 # Checkout the 2.1.0
+    mkdir build
+    cd build
+    cmake .. -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF
+    make -j
+    make install
+    cd ..
+    rm -rf ceres-solver
+
+    # build OpenMVS
+    git clone https://github.com/cdcseacave/openMVS.git openMVS
+    cd openMVS
+    git checkout 3b2bb8402c9c38c77b8be27461f95284c60b5d21 # Checkout ver.2.0.1
+    cd ..
+    mkdir openMVS_build && cd openMVS_build
+    VCG_ROOT="$HOME/vcglib" cmake . ../openMVS -DCMAKE_BUILD_TYPE=Release -DVCG_ROOT="$main_path/vcglib" -DCMAKE_LIBRARY_PATH=/usr/local/cuda/lib64/stubs
+
+    # install OpenMVS
+    make -j2 && make install
+    cd ..
+    rm -rf openMVS openMVS_build vcglib
+
+
+    # finalize
+
+
+%runscript
+    ############################################
+    # runscript. singularity run で実行するコマンド
+    ############################################
+
+%startscript
+    ############################################
+    # startscript. singularity insntance startで実行するコマンド 
+    ############################################
+
+%test
+    ############################################
+    # test. テスト時に実行するコマンド
+    ############################################
+
+
+%labels
+    ############################################
+    # label. ラベル
+    ############################################
+    Author Daiju Kanaoka
+    Version v0.0.1
+
+%help
+    ############################################
+    # help. ヘルプ
+    ############################################
