@@ -1,0 +1,118 @@
+Bootstrap: docker
+From: nvidia/cuda:11.3.1-devel-ubuntu20.04
+Stage: build
+
+%setup
+    ############################################
+    # setup. コンテナ外で行われるコマンド
+    ############################################
+
+%files
+    ############################################
+    # files ファイルのマウント
+    ############################################
+    ../000_template/entrypoint.sh /
+
+%environment
+    ############################################
+    # enviroments 環境変数の定義
+    ############################################
+    export TZ=Asia/Tokyo 
+    export LC_ALL=C
+
+%post
+    ############################################
+    # post ファイルのダウロードとか，色々．基本的にここに書く
+    ############################################
+    # aptでインストールする場合，入力待ちを避けるために下記のように書く
+    # DEBIAN_FRONTEND=noninteractive && apt install -y hogehoge ...
+
+    # essential  
+    apt update
+    DEBIAN_FRONTEND=noninteractive apt install -y lsb-release wget curl git nano gnupg build-essential software-properties-common
+    mkdir -p /run/user/1000
+    mkdir -p /var/lib/dbus
+    
+    # avoid freezing
+    DEBIAN_FRONTEND=noninteractive apt install -y tzdata keyboard-configuration
+
+    # install common software
+    DEBIAN_FRONTEND=noninteractive apt install -y python3-dev libopenexr-dev ffmpeg freeglut3-dev
+
+    # python setup
+    ln -s /usr/bin/python3.8 /usr/bin/python
+    curl -kL https://bootstrap.pypa.io/pip/get-pip.py | python
+
+    # install python module 
+    pip install \
+    commentjson~=0.9.0 \
+    imageio~=2.16.0 \
+    numpy~=1.21.2 \
+    pybind11~=2.7.1 \
+    scipy~=1.7.1 \
+    tqdm~=4.62.2 \
+    opencv-python~=4.5.5.62 \
+
+    # install pytorch 1.12.0
+    pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113
+
+    # clone kaolin-wisp repository
+    git clone --recursive https://github.com/NVIDIAGameWorks/kaolin-wisp.git
+    cd kaolin-wisp
+    git checkout ef1d51f
+
+    # install kaolin
+    git clone --recursive https://github.com/NVIDIAGameWorks/kaolin
+    cd kaolin
+    git checkout 4d8f49d
+    IGNORE_TORCH_VER=1 FORCE_CUDA=1 pip install .
+    cd ..
+
+    # install dependencies
+    pip install -r requirements.txt
+
+    # install the interactive renderer (Optional)
+    git clone --recursive https://github.com/inducer/pycuda
+    cd pycuda
+    git checkout f9c821b
+    python configure.py --cuda-root=/usr/local/cuda --cuda-enable-gl
+    pip install .
+    cd ..
+
+    # install rendere denedencies
+    pip install -r requirements_app.txt
+
+    # install kaolin-wisp
+    FORCE_CUDA=1 pip install .
+    cd ..
+
+    # finalize
+    rm -rf /var/lib/apt/lists/* ./kaolin-wisp
+
+%runscript
+    ############################################
+    # runscript. singularity run で実行するコマンド
+    ############################################
+
+%startscript
+    ############################################
+    # startscript. singularity insntance startで実行するコマンド 
+    ############################################
+
+%test
+    ############################################
+    # test. テスト時に実行するコマンド
+    ############################################
+
+
+%labels
+    ############################################
+    # label. ラベル
+    ############################################
+    Author Daiju Kanaoka
+    Version v0.0.1
+
+%help
+    ############################################
+    # help. ヘルプ
+    ############################################
