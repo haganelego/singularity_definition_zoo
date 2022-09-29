@@ -1,5 +1,5 @@
 Bootstrap: docker
-From: nvidia/cuda:11.3.1-devel-ubuntu20.04
+From: nvidia/cudagl:11.3.1-devel-ubuntu20.04
 Stage: build
 
 %setup
@@ -36,6 +36,42 @@ Stage: build
     # avoid freezing
     DEBIAN_FRONTEND=noninteractive apt install -y tzdata keyboard-configuration
 
+    ###########################
+    # COLMAP
+    ###########################
+    # install dependencies
+    DEBIAN_FRONTEND=noninteractive apt install -y cmake libboost-program-options-dev libboost-filesystem-dev libboost-graph-dev \
+                                                  libboost-system-dev libboost-test-dev libeigen3-dev libsuitesparse-dev \
+                                                  libfreeimage-dev libmetis-dev libgoogle-glog-dev libgflags-dev libglew-dev \
+                                                  qtbase5-dev libqt5opengl5-dev libcgal-dev openssl libssl-dev
+    
+    # install Ceres solver
+    git clone https://ceres-solver.googlesource.com/ceres-solver
+    cd ceres-solver
+    git checkout f68321e7de8929fbcdb95dd42877531e64f72f66 # Checkout the 2.1.0
+    mkdir build
+    cd build
+    cmake .. -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF
+    make -j
+    make install
+    cd ..
+    rm -rf ceres-solver
+
+    # install colmap
+    git clone https://github.com/colmap/colmap.git
+    cd colmap
+    git checkout ea40ef9aecf98eec7e14bd6eeedd2a5381c6b46b # Checkout ver.3.7
+    mkdir build
+    cd build
+    cmake ..
+    make -j
+    make install
+    cd ..
+    rm -rf colmap
+
+    ###########################
+    # kaolin-wisp
+    ###########################
     # install common software
     DEBIAN_FRONTEND=noninteractive apt install -y python3-dev libopenexr-dev ffmpeg freeglut3-dev
 
