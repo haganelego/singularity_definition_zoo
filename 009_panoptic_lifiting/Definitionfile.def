@@ -1,0 +1,118 @@
+Bootstrap: docker
+From: nvidia/cuda:11.3.0-devel-ubuntu20.04
+Stage: build
+
+%setup
+    ############################################
+    # setup. コンテナ外で行われるコマンド
+    ############################################
+
+%files
+    ############################################
+    # files ファイルのマウント
+    ############################################
+    ../000_template/entrypoint.sh /
+
+%environment
+    ############################################
+    # enviroments 環境変数の定義
+    ############################################
+    export TZ=Asia/Tokyo 
+    export LC_ALL=C
+
+%post
+    ############################################
+    # post ファイルのダウロードとか，色々．基本的にここに書く
+    ############################################
+    # aptでインストールする場合，入力待ちを避けるために下記のように書く
+    # DEBIAN_FRONTEND=noninteractive && apt install -y hogehoge ...
+
+    # essential  
+    apt update
+    DEBIAN_FRONTEND=noninteractive apt install -y lsb-release wget curl git nano gnupg build-essential software-properties-common
+    mkdir -p /run/user/1000
+    mkdir -p /var/lib/dbus
+    
+    # avoid freezing
+    DEBIAN_FRONTEND=noninteractive apt install -y tzdata keyboard-configuration
+
+    DEBIAN_FRONTEND=noninteractive apt install -y python3-dev
+
+    ln -s /usr/bin/python3.8 /usr/bin/python
+    curl -kL https://bootstrap.pypa.io/pip/get-pip.py | python
+
+    DEBIAN_FRONTEND=noninteractive apt install libgl1-mesa-dev -y
+    DEBIAN_FRONTEND=noninteractive apt install libglib2.0-0 -y
+
+    pip install torch==1.12.1+cu113 torchvision==0.13.1+cu113 torchaudio==0.12.1 --extra-index-url https://download.pytorch.org/whl/cu113
+    pip install torch-scatter==2.1.0 -f https://data.pyg.org/whl/torch-1.13.0+cu11.7.html
+
+    # requirements.txt
+    pip install randomname
+    pip install ballpark==1.4.0
+    pip install einops==0.3.0
+    pip install h5py==3.7.0
+    pip install hydra-core==1.3.1
+    pip install imageio==2.9.0
+    pip install imageio-ffmpeg==0.4.2
+    pip install imgaug==0.2.6
+    pip install imgviz==1.6.2
+    pip install lightning-utilities==0.5.0
+    pip install matplotlib==3.5.3
+    pip install matplotlib-inline==0.1.6
+    pip install numpy==1.23.3
+    pip install omegaconf==2.3.0
+    pip install opencv-python==4.6.0.66
+    pip install Pillow==9.2.0
+    pip install plotly==5.7.0
+    pip install pypng==0.20220715.0
+    pip install pytorch-lightning==1.8.6
+    pip install rich==12.5.1
+    pip install scikit-image==0.19.3
+    pip install scipy==1.9.1
+    pip install tabulate==0.9.0
+    pip install tensorboard==2.9.0
+    pip install tensorboard-data-server==0.6.1
+    pip install tensorboard-plugin-wit==1.8.1
+    pip install tensorboardX==2.5.1
+    pip install termcolor==2.2.0
+    pip install torch-efficient-distloss==0.1.3
+    pip install torch-fidelity==0.3.0
+    pip install torchmetrics==0.11.0
+    pip install torchtyping==0.1.4
+    pip install tornado==6.2
+    pip install tqdm==4.64.1
+    pip install transforms3d==0.4.1
+    pip install trimesh==3.18.0
+    pip install wandb==0.13.4
+
+    pip cache purge
+
+
+%runscript
+    ############################################
+    # runscript. singularity run で実行するコマンド
+    ############################################
+
+%startscript
+    ############################################
+    # startscript. singularity insntance startで実行するコマンド 
+    ############################################
+
+%test
+    ############################################
+    # test. テスト時に実行するコマンド
+    ############################################
+
+
+%labels
+    ############################################
+    # label. ラベル
+    ############################################
+    Author Daiju Kanaoka
+    Version v0.0.1
+
+%help
+    ############################################
+    # help. ヘルプ
+    ############################################
