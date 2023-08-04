@@ -1,0 +1,75 @@
+Bootstrap: docker
+From: pytorch/pytorch:2.0.0-cuda11.7-cudnn8-devel
+Stage: build
+
+%setup
+    ############################################
+    # setup. コンテナ外で行われるコマンド
+    ############################################
+
+%files
+    ############################################
+    # files ファイルのマウント
+    ############################################
+    ../000_template/entrypoint.sh /
+
+%environment
+    ############################################
+    # enviroments 環境変数の定義
+    ############################################
+    export TZ=Asia/Tokyo 
+    export LC_ALL=C
+
+%post
+    ############################################
+    # post ファイルのダウロードとか，色々．基本的にここに書く
+    ############################################
+    # aptでインストールする場合，入力待ちを避けるために下記のように書く
+    # DEBIAN_FRONTEND=noninteractive && apt install -y hogehoge ...
+
+    # essential  
+    apt update
+    DEBIAN_FRONTEND=noninteractive apt install -y lsb-release wget curl git nano gnupg build-essential software-properties-common libglib2.0-0 libgl1-mesa-dev qt5-default python-opencv
+    mkdir -p /run/user/1000
+    mkdir -p /var/lib/dbus
+    
+    DEBIAN_FRONTEND=noninteractive git clone https://github.com/ikuzo198/segment-anything-annotator.git
+
+    DEBIAN_FRONTEND=noninteractive pip3 install -r segment-anything-annotator/requirements.txt
+
+    # DEBIAN_FRONTEND=noninteractive pip3 uninstall -y opencv-python
+
+    # DEBIAN_FRONTEND=noninteractive pip3 install opencv-contrib-python opencv-python-headless
+
+
+    # avoid freezing
+    DEBIAN_FRONTEND=noninteractive apt install -y tzdata keyboard-configuration
+
+
+%runscript
+    ############################################
+    # runscript. singularity run で実行するコマンド
+    ############################################
+
+%startscript
+    ############################################
+    # startscript. singularity insntance startで実行するコマンド 
+    ############################################
+
+%test
+    ############################################
+    # test. テスト時に実行するコマンド
+    ############################################
+
+
+%labels
+    ############################################
+    # label. ラベル
+    ############################################
+    Author Ikuya Matsumoto
+    Version v0.0.1
+
+%help
+    ############################################
+    # help. ヘルプ
+    ############################################
