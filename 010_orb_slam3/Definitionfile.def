@@ -1,0 +1,163 @@
+Bootstrap: docker
+From: ros:noetic-ros-core
+Stage: build
+
+%setup
+    ############################################
+    # setup. コンテナ外で行われるコマンド
+    ############################################
+
+%files
+    ############################################
+    # files ファイルのマウント
+    ############################################
+    ../000_template/entrypoint.sh /
+
+%environment
+    ############################################
+    # enviroments 環境変数の定義
+    ############################################
+    export TZ=Asia/Tokyo 
+    export LC_ALL=C
+
+%post
+    ############################################
+    # post ファイルのダウロードとか，色々．基本的にここに書く
+    ############################################
+    # aptでインストールする場合，入力待ちを避けるために下記のように書く
+    # DEBIAN_FRONTEND=noninteractive && apt install -y hogehoge ...
+
+    # essential  
+    apt update
+    DEBIAN_FRONTEND=noninteractive apt install -y lsb-release wget curl git nano gnupg build-essential software-properties-common zip
+    mkdir -p /run/user/1000
+    mkdir -p /var/lib/dbus
+    mkdir ~/install && cd ~/install
+
+    
+    # avoid freezing
+    DEBIAN_FRONTEND=noninteractive apt install -y tzdata keyboard-configuration
+
+    # ############################################
+    # # ROS melodic-full install
+    # ############################################
+    # apt update
+    # DEBIAN_FRONTEND=noninteractive apt install -y ros-melodic-desktop-full
+    # DEBIAN_FRONTEND=noninteractive apt install -y python-rosinstall python-rosinstall-generator python-wstool build-essential python-catkin-tools
+    # echo source /opt/ros/melodic/setup.bash >> /entrypoint.sh
+
+    ############################################
+    # ROS noetic-full install
+    ############################################
+    DEBIAN_FRONTEND=noninteractive apt install -y ros-noetic-desktop-full
+    DEBIAN_FRONTEND=noninteractive apt install -y python3-rosdep python3-rosinstall python3-vcstools python3-catkin-tools
+    echo source /opt/ros/noetic/setup.bash >> /entrypoint.sh
+
+    ###########################################
+    # install eigen3
+    ###########################################
+    DEBIAN_FRONTEND=noninteractive apt install -y libeigen3-dev
+
+    ############################################
+    # Build Pangolin
+    ############################################
+    # DEBIAN_FRONTEND=noninteractive apt install -y libc++-dev libc++-helpers libc++1 libc++abi1 libglew-dev libglew2.0 libxkbcommon-dev ninja-build wayland-protocols
+    DEBIAN_FRONTEND=noninteractive apt install -y libc++-dev libc++1 libc++abi1 libglew-dev libxkbcommon-dev ninja-build wayland-protocols
+
+    git clone --recursive https://github.com/stevenlovegrove/Pangolin.git
+    cd Pangolin
+    mkdir build && cd build
+    cmake ..
+    make install
+
+    ############################################
+    # build opencv 4.4.0 from source
+    ############################################
+    cd ~/install
+    wget -O opencv.zip https://github.com/opencv/opencv/archive/4.4.0.zip
+    unzip opencv.zip
+    rm opencv.zip
+    cd opencv-4.4.0
+    mkdir build && cd build
+
+    cmake -D CMAKE_BUILD_TYPE=RELEASE \
+        -D CMAKE_INSTALL_PREFIX=/usr/local \
+        -D INSTALL_PYTHON_EXAMPLES=ON \
+        -D INSTALL_C_EXAMPLES=OFF \
+        -D BUILD_EXAMPLES=ON ..
+
+    make -j8
+    make install
+    cd ~/install
+    rm -rf opencv-4.4.0
+
+    ############################################
+    # build g2o
+    ############################################
+    DEBIAN_FRONTEND=noninteractive apt install -y libsuitesparse-dev qtdeclarative5-dev qt5-qmake
+    cd ~/install/
+    git clone https://github.com/RainerKuemmerle/g2o.git
+    cd g2o
+    mkdir build
+    cd build
+    cmake .. -DCMAKE_CXX_FLAGS="-std=c++11"
+    make
+    make install
+
+
+    ############################################
+    # build DBoW2
+    ############################################
+    cd ~/install/
+    git clone https://github.com/dorian3d/DBoW2.git
+    cd DBoW2
+    mkdir build
+    cd build
+    cmake ..
+
+    ############################################
+    # install python-2.7
+    ############################################
+    # DEBIAN_FRONTEND=noninteractive apt install libpython2.7-dev
+
+    ############################################
+    # ORB_SLAM3
+    ############################################
+    cd ~/
+    mkdir ros_ws/ && cd ros_ws/
+    git clone https://github.com/UZ-SLAMLab/ORB_SLAM3.git
+    cd ORB_SLAM3/
+    chmod +x build.sh
+    chmod +x build_ros.sh
+    sed -i 's/++11/++14/g' CMakeLists.txt
+    ./build.sh
+    # ./build_ros.sh
+
+
+%runscript
+    ############################################
+    # runscript. singularity run で実行するコマンド
+    ############################################
+
+%startscript
+    ############################################
+    # startscript. singularity insntance startで実行するコマンド 
+    ############################################
+
+%test
+    ############################################
+    # test. テスト時に実行するコマンド
+    ############################################
+
+
+%labels
+    ############################################
+    # label. ラベル
+    ############################################
+    Author Daiju Kanaoka
+    Version v0.0.1
+
+%help
+    ############################################
+    # help. ヘルプ
+    ############################################
