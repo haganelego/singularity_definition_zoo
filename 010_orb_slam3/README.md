@@ -1,6 +1,6 @@
 # ORB-SLAM3 for ros-noetic
 
-- ビルドコマンド(sand_box)
+- ビルドコマンド(sandbox)
 
 ```bash
 singularity build --fakeroot --sandbox orb_slam3_sandbox Definitionfile.def
@@ -9,10 +9,12 @@ singularity build --fakeroot --sandbox orb_slam3_sandbox Definitionfile.def
 - ORB_SLAM3の用意（ローカルでの作業）
   - 本セットアップもsingularityの中で行いたい方は，Defファイルの後半部分をコメントアウトしてください．
     - `install ORB_SLAM3`，`install orb_slam3_ros_wrapper`
-  - ローカル環境の，`~/ros_ws`を使用します．
+  - ローカル環境の，`~/ros_ws/vslam_ws`を使用します．（無ければ作成）
+  - 異なるパスで作業したい場合は，適宜パス指定を読み替えながら利用してください．
 
 ```bash
 singularity shell orb_slam3_sandbox # 仮想環境の起動
+source /entrypoint.sh
 
 ### 仮想環境の中で実行
 # build ORB_SLAM
@@ -36,6 +38,30 @@ cp ~/ros_ws/vslam_ws/src/include/ORB_SLAM3/Vocabulary/ORBvoc.txt ~/ros_ws/vslam_
 
 cd ~/ros_ws/vslam_ws/src/
 catkin build -j4
+```
+
+- ORB_SLAM3の起動
+  - 事前に[euroc_dataset](http://robotics.ethz.ch/~asl-datasets/ijrr_euroc_mav_dataset/machine_hall/)からrosbagをダウンロード
+
+- terminal1
+
+```bash
+singularity shell orb_slam3_sandbox # 仮想環境の起動
+source /entrypoint.sh
+
+cd ~/ros_ws/vslam_ws/src/
+source devel/setup.bash
+roslaunch orb_slam3_ros_wrapper euroc_mono.launch
+```
+
+- terminal2
+
+```bash
+singularity shell orb_slam3_sandbox # 仮想環境の起動
+source /entrypoint.sh
+
+cd your/rosbag/path
+rosbag play MH_01_easy.bag
 ```
 
 ## 参考
