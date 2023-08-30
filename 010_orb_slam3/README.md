@@ -66,7 +66,7 @@ rosbag play MH_01_easy.bag
 
 ## 参考
 
-- ORB-SLAM3をnoeticで動かす[https://handaru.net/blog/2022/09/15/376/]
+- [ORB-SLAM3をnoeticで動かす](https://handaru.net/blog/2022/09/15/376/)
 
 ## FAQ
 
