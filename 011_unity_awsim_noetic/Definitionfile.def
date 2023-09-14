@@ -1,0 +1,124 @@
+Bootstrap: docker
+From: nvidia/cuda:11.7.1-cudnn8-devel-ubuntu22.04
+Stage: build
+
+%setup
+    ############################################
+    # setup. コンテナ外で行われるコマンド
+    ############################################
+
+%files
+    ############################################
+    # files ファイルのマウント
+    ############################################
+    ../000_template/entrypoint.sh /
+
+%environment
+    ############################################
+    # enviroments 環境変数の定義
+    ############################################
+    export TZ=Asia/Tokyo 
+    export LC_ALL=C
+
+%post
+    ############################################
+    # post ファイルのダウロードとか，色々．基本的にここに書く
+    ############################################
+    # aptでインストールする場合，入力待ちを避けるために下記のように書く
+    # DEBIAN_FRONTEND=noninteractive && apt install -y hogehoge ...
+
+    # essential  
+    apt update
+    DEBIAN_FRONTEND=noninteractive apt install -y lsb-release wget curl git nano gnupg build-essential software-properties-common unzip
+    mkdir -p /run/user/1000
+    mkdir -p /var/lib/dbus
+    
+    # avoid freezing
+    DEBIAN_FRONTEND=noninteractive apt install -y tzdata keyboard-configuration
+
+    ############################################
+    # install AWSIM
+    ############################################
+    # wget https://github.com/tier4/AWSIM/releases/download/v1.1.0/AWSIM_v1.1.0.zip
+    # unzip ./AWSIM_v1.1.0.zip
+    # chmod +x ./AWSIM/AWSIM.x86_64
+
+    echo "export ROS_LOCALHOST_ONLY=1" >> /entrypoint.sh
+    echo "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp" >> /entrypoint.sh
+    echo "if [ ! -e /tmp/cycloneDDS_configured ]; then" >> /entrypoint.sh
+    echo "    sysctl -w net.core.rmem_max=2147483647" >> /entrypoint.sh
+    echo "    ip link set lo multicast on" >> /entrypoint.sh
+    echo "    touch /tmp/cycloneDDS_configured" >> /entrypoint.sh
+    echo "fi" >> /entrypoint.sh
+
+    ############################################
+    # ROS2 humble-full install
+    ############################################
+    apt update
+    DEBIAN_FRONTEND=noninteractive apt install -y locales
+    DEBIAN_FRONTEND=noninteractive apt install -y software-properties-common
+    add-apt-repository universe
+
+    curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | tee /etc/apt/sources.list.d/ros2.list > /dev/null
+
+    apt update
+    DEBIAN_FRONTEND=noninteractive apt install -y ros-humble-desktop
+    echo source /opt/ros/humble/setup.bash >> /entrypoint.sh
+
+    ############################################
+    # Autoware install
+    ############################################
+    git clone https://github.com/tier4/AWSIM.git
+
+
+
+
+    ############################################
+    # install unity hub
+    ############################################
+    # mkdir -p /opt/unity
+    # wget -P /opt/unity https://public-cdn.cloud.unity3d.com/hub/prod/UnityHub.AppImage
+    # chown -R ${USER}:${GID} /opt/unity && chmod +x /opt/unity/UnityHub.AppImage
+
+    ############################################
+    # install blender-hub 3.6.2
+    ############################################
+    # mkdir ~/install
+    # cd ~/install
+
+    # wget https://www.blender.org/download/release/Blender3.6/blender-3.6.2-linux-x64.tar.xz/
+    # tar xfv blender-3.6.2-linux-x64.tar.xz
+    # sudo mv blender-3.6.2-linux-x64 /opt/
+    # cp /opt/blender-3.6.2-linux-x64/blender.desktop 
+    # sudo ln -s /opt/blender-x.x.x-linux-x64/blender /usr/local/bin/blender
+    # ~/.local/share/applications/
+    # nano ~/.local/share/applications/blender.desktop
+
+%runscript
+    ############################################
+    # runscript. singularity run で実行するコマンド
+    ############################################
+
+%startscript
+    ############################################
+    # startscript. singularity insntance startで実行するコマンド 
+    ############################################
+
+%test
+    ############################################
+    # test. テスト時に実行するコマンド
+    ############################################
+
+
+%labels
+    ############################################
+    # label. ラベル
+    ############################################
+    Author Yuga Yano
+    Version v0.0.1
+
+%help
+    ############################################
+    # help. ヘルプ
+    ############################################
