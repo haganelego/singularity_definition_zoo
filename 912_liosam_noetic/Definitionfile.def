@@ -1,0 +1,119 @@
+Bootstrap: docker
+From: ros:noetic-ros-core
+Stage: build
+
+%setup
+    ############################################
+    # setup. コンテナ外で行われるコマンド
+    ############################################
+
+%files
+    ############################################
+    # files ファイルのマウント
+    ############################################
+    ../000_template/entrypoint.sh /
+
+%environment
+    ############################################
+    # enviroments 環境変数の定義
+    ############################################
+    export TZ=Asia/Tokyo 
+    export LC_ALL=C
+
+%post
+    ############################################
+    # post ファイルのダウロードとか，色々．基本的にここに書く
+    ############################################
+    # aptでインストールする場合，入力待ちを避けるために下記のように書く
+    # DEBIAN_FRONTEND=noninteractive && apt install -y hogehoge ...
+
+    # essential  
+    apt update
+    DEBIAN_FRONTEND=noninteractive apt install -y lsb-release wget curl git nano gnupg build-essential software-properties-common
+    mkdir -p /run/user/1000
+    mkdir -p /var/lib/dbus
+    
+    # avoid freezing
+    DEBIAN_FRONTEND=noninteractive apt install -y tzdata keyboard-configuration
+
+
+    ##################################
+    # ROS noetic
+    #################################
+    apt update
+    DEBIAN_FRONTEND=noninteractive apt install -y ros-noetic-desktop-full
+    DEBIAN_FRONTEND=noninteractive apt install -y python3-rosdep python3-rosinstall python3-vcstools python3-catkin-tools
+
+    # python setup
+    ln -sf /usr/bin/python3 /usr/bin/python
+    curl -kL https://bootstrap.pypa.io/pip/get-pip.py | python
+
+    # set entrypoint.sh
+    # source /opt/ros/noetic/setup.bash
+    echo source /opt/ros/noetic/setup.bash >> /entrypoint.sh
+
+
+    ############################################
+    # LIO-SAMの依存関係にあるaptパッケージ
+    ############################################
+
+    ##################################
+    # apt pkg install
+    #################################
+    DEBIAN_FRONTEND=noninteractive apt install -y libpcap-dev
+    DEBIAN_FRONTEND=noninteractive apt install -y ros-noetic-navigation
+    DEBIAN_FRONTEND=noninteractive apt install -y ros-noetic-robot-localization
+    DEBIAN_FRONTEND=noninteractive apt install -y ros-noetic-robot-state-publisher
+
+    DEBIAN_FRONTEND=noninteractive add-apt-repository ppa:borglab/gtsam-release-4.0
+    DEBIAN_FRONTEND=noninteractive apt install -y libgtsam-dev libgtsam-unstable-dev
+    DEBIAN_FRONTEND=noninteractive apt install -y software-properties-common
+    DEBIAN_FRONTEND=noninteractive apt install -y ros-noetic-libg2o
+    DEBIAN_FRONTEND=noninteractive apt install -y libomp-dev
+    DEBIAN_FRONTEND=noninteractive apt install -y ros-noetic-pcl-ros
+    DEBIAN_FRONTEND=noninteractive apt install -y ros-noetic-rtcm-msgs
+    DEBIAN_FRONTEND=noninteractive apt install -y ros-noetic-nmea-msgs
+
+    pip install open3d -y --ignore-install
+    ##################################
+    # ndt_omp install form source
+    #################################
+    # git clone https://github.com/koide3/ndt_omp.git
+    # cd ndt_omp
+    # mkdir build && cd build
+    # cmake ..
+    # make install .
+    # cd ../../
+    # rm -rf ndt_omp
+
+    # finalize
+    rm -rf /var/lib/apt/lists/*
+
+
+%runscript
+    ############################################
+    # runscript. singularity run で実行するコマンド
+    ############################################
+
+%startscript
+    ############################################
+    # startscript. singularity insntance startで実行するコマンド 
+    ############################################
+
+%test
+    ############################################
+    # test. テスト時に実行するコマンド
+    ############################################
+
+
+%labels
+    ############################################
+    # label. ラベル
+    ############################################
+    Author Daiju Kanaoka
+    Version v0.0.1
+
+%help
+    ############################################
+    # help. ヘルプ
+    ############################################
