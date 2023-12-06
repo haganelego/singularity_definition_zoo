@@ -110,9 +110,10 @@ Stage: build
     cmake ..
 
     ############################################
-    # install python-2.7
+    # install pip
     ############################################
-    # DEBIAN_FRONTEND=noninteractive apt install libpython2.7-dev
+    DEBIAN_FRONTEND=noninteractive apt install -y python3-pip
+    pip3 install evo==1.25.1
 
     ############################################
     # install ORB_SLAM3
