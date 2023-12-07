@@ -2,20 +2,20 @@
 
 - [VRB: Affordances from Human Videos as a Versatile Representation for Robotics](https://github.com/shikharbahl/vrb)
 
-- buildコマンド
+## buildコマンド
 
 ```bash
 singularity build --fakeroot --sandbox <path>/singularity_definition_zoo/013_clrnet_cuda_11_7/sandbox_clrnet Definitionfile.def 
 ```
 
-- 起動コマンド
+## 起動コマンド
 
 ```bash
 singularity shell --nv -B /run/user/1000,/var/lib/dbus/machine-id env/sigverse_sandbox/
 source /entrypoint.sh
 ```
 
-- vrb使用メモ
+## vrb使用メモ
 
 ```bash
 git clone https://github.com/shikharbahl/vrb.git
@@ -31,7 +31,12 @@ cd vrb/
 python demo.py --image ./kitchen.jpeg --model_path ./models/model_checkpoint_1249.pth.tar
 ```
 
-- 環境概要
+## プロンプト調整
+
+- [この行](https://github.com/shikharbahl/vrb/blob/a3aaa272fddfa6c766d1a0069b486c6cece60f31/inference.py#L55)で調整可能
+- 引数指定などは対応していない
+
+## 環境概要
 
 | | |
 | --- | --- |
